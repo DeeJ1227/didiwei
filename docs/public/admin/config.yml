@@ -1,0 +1,24 @@
+# 后端配置：使用 Netlify 的 Git Gateway
+backend:
+  name: git-gateway
+  branch: main  # ⚠️ 如果你的 GitHub 分支名是 master，请改为 master
+
+#local_backend: true
+
+# 媒体配置：图片上传到哪里
+media_folder: "docs/public/images/uploads"
+public_folder: "/images/uploads"
+
+# 集合配置：定义"留言"这个功能
+collections:
+  - name: "messages"
+    label: "💌 恋爱留言"
+    folder: "docs/messages/posts"  # 留言文件存放的位置
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # 文件名格式
+    fields:
+      - {label: "标题", name: "title", widget: "string"}
+      - {label: "日期", name: "date", widget: "datetime"}
+      - {label: "谁写的", name: "author", widget: "select", options: ["迪迪", "耀薇"]}
+      - {label: "封面图", name: "cover", widget: "image", required: false}
+      - {label: "内容", name: "body", widget: "markdown"}
