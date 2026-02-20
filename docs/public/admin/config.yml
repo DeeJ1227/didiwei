@@ -3,7 +3,7 @@ backend:
   name: git-gateway
   branch: main  # ⚠️ 如果你的 GitHub 分支名是 master，请改为 master
 
-#local_backend: true
+local_backend: true
 
 # 媒体配置：图片上传到哪里
 media_folder: "docs/public/images/uploads"
@@ -22,3 +22,42 @@ collections:
       - {label: "谁写的", name: "author", widget: "select", options: ["迪迪", "耀薇"]}
       - {label: "封面图", name: "cover", widget: "image", required: false}
       - {label: "内容", name: "body", widget: "markdown"}
+
+  # 👇 升级版：愿望清单
+  - name: "wishes"
+    label: "✨ 愿望清单"
+    folder: "docs/wishes/data"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "愿望名称", name: "title", widget: "string"}
+      - {label: "是否已完成？", name: "done", widget: "boolean", default: false, required: false}
+      - {label: "简短的心得/描述", name: "description", widget: "string", required: false}
+      - {label: "证据照片", name: "image", widget: "image", required: false}
+
+  # 👇 升级版：我们的足迹 (增加正反面)
+  - name: "footprints"
+    label: "🗺️ 我们的足迹"
+    folder: "docs/footprints/data"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "城市", name: "city", widget: "string", hint: "必须填写，前台会根据城市自动分类"}
+      - {label: "打卡日期", name: "date", widget: "datetime"}
+      - {label: "一句回忆", name: "description", widget: "string"}
+      - {label: "正面照片", name: "image_front", widget: "image"}
+      - {label: "反面照片", name: "image_back", widget: "image", required: false}
+  
+  # 👇 升级版：玫瑰相册 (支持标题和多图列表)
+  - name: "roses"
+    label: "🌹 玫瑰相册"
+    folder: "docs/roses/data"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "相册主题", name: "title", widget: "string", hint: "这会显示在后台列表中，比如：2026海边回忆"}
+      - label: "照片集"
+        name: "gallery"
+        widget: "list"
+        hint: "点击 Add 照片集 添加多张照片"
+        field: {label: "照片", name: "image", widget: "image"}

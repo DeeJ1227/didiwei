@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永恒玫瑰 - 互动记忆</title>
+    <style>
+        :root {
+            --primary: #8b0020;
+            --gold: #d4af37;
+            --bg-color: #fcfcfc;
+            --text-color: #1a0005;
+        }
+        body { 
+            margin: 0; overflow: hidden; 
+            background-color: var(--bg-color); 
+            font-family: 'Playfair Display', 'Times New Roman', serif; 
+            color: var(--text-color);
+        }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        #vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 40%, rgba(240,240,240,0.9) 100%);
+            z-index: 2; pointer-events: none;
+            opacity: 0.8; transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.focus-mode #vignette { opacity: 1; background: radial-gradient(circle at center, transparent 20%, rgba(200,200,200,0.95) 100%); }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none;
+            display: flex; flex-direction: column; 
+            align-items: center; padding-top: 60px; box-sizing: border-box;
+            transition: opacity 0.5s ease;
+        }
+        
+        /* 统一控制所有隐藏状态的类 */
+        .ui-hidden { 
+            opacity: 0 !important; 
+            pointer-events: none !important; 
+        }
+
+        h1 { 
+            color: var(--primary); font-size: 52px; margin: 0; font-weight: normal; 
+            letter-spacing: 16px; text-transform: uppercase;
+            text-shadow: 0 4px 15px rgba(139, 0, 32, 0.15); 
+        }
+        .subtitle {
+            color: #660011; font-size: 13px; letter-spacing: 8px; 
+            margin-top: 15px; opacity: 0.8; text-transform: uppercase;
+        }
+
+        .upload-wrapper { 
+            position: absolute;
+            bottom: 100px;
+            right: 40px;
+            pointer-events: auto; 
+            z-index: 50; 
+            transition: opacity 0.5s ease; /* 同步动画周期 */
+        }
+        
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.9); 
+            border: 1px solid rgba(139, 0, 32, 0.2); 
+            color: var(--primary); 
+            padding: 12px 0; 
+            width: 170px;
+            text-align: center;
+            box-sizing: border-box;
+            cursor: pointer; 
+            letter-spacing: 4px; 
+            font-size: 11px; 
+            transition: all 0.4s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            display: block; 
+            border-radius: 6px;
+        }
+        .upload-btn:hover { 
+            background: var(--primary); color: #fff; 
+            box-shadow: 0 8px 25px rgba(139, 0, 32, 0.25);
+        }
+        #file-input { display: none; }
+
+        #loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s ease-out;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 1px solid rgba(139, 0, 32, 0.1); 
+            border-top: 1px solid var(--primary); border-radius: 50%; 
+            animation: spin 1s linear infinite;
+        }
+        .loader-text {
+            color: var(--primary); font-size: 12px; letter-spacing: 6px; margin-top: 25px;
+            text-transform: uppercase; animation: pulse 2s infinite;
+        }
+
+        .gesture-badge {
+            position: absolute; bottom: 40px; right: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(139, 0, 32, 0.2);
+            color: var(--primary); 
+            padding: 12px 0; 
+            width: 170px;
+            text-align: center;
+            box-sizing: border-box;
+            font-size: 11px; 
+            border-radius: 6px; 
+            letter-spacing: 4px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            z-index: 20; 
+            transition: all 0.5s ease; /* 同步动画周期 */
+        }
+        .gesture-active {
+            background: var(--primary) !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(139, 0, 32, 0.3);
+        }
+
+        .controls-hint {
+            position: absolute; bottom: 40px; left: 40px;
+            color: rgba(26, 0, 5, 0.5); font-size: 11px; letter-spacing: 2px;
+            line-height: 2.2; z-index: 20; pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        .controls-hint span { color: var(--primary); font-weight: bold; }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/+esm"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">系统初始化</div>
+    </div>
+
+    <div id="vignette"></div>
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <h1>永恒玫瑰</h1>
+        <div class="subtitle">互动记忆相册</div>
+    </div>
+    
+    <div class="upload-wrapper">
+        <label class="upload-btn">
+            添加影像数据
+            <input type="file" id="file-input" multiple accept="image/*">
+        </label>
+    </div>
+
+    <div id="gesture-badge" class="gesture-badge">视觉追踪模块启动中</div>
+    <video id="webcam" autoplay playsinline style="display:none;"></video>
+
+    <div class="controls-hint">
+        <span>握拳</span> / 粒子聚合<br>
+        <span>张开</span> / 粒子离散<br>
+        <span>捏合</span> 或 <span>点击照片</span> / 对焦影像<br>
+        <span>移动</span> 或 <span>鼠标拖拽</span> / 改变机位<br>
+        <span>鼠标右键 </span>/ 切换 UI 可见性<br>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
+
+        const CONFIG = {
+            colors: {
+                bg: 0xfcfcfc,
+                petalBase: 0xa1001e,
+                dust: 0x8b0020
+            },
+            counts: {
+                petalClusters: 160,          
+                particlesPerCluster: 100,    
+                dust: 800
+            }
+        };
+        const TOTAL_PARTICLES = CONFIG.counts.petalClusters * CONFIG.counts.particlesPerCluster;
+
+        const STATE = {
+            mode: 'ROSE', 
+            previousMode: 'ROSE', 
+            focusTarget: null,
+            focusDist: 60, 
+            focusPan: new THREE.Vector2(0, 0), 
+            hand: { detected: false, x: 0, y: 0 },
+            targetRotation: new THREE.Vector2(0, 0),
+            currentRotation: new THREE.Vector2(0, 0)
+        };
+
+        let scene, camera, renderer, composer, controls;
+        let mainGroup, photoGroup;
+        let clock = new THREE.Clock();
+
+        let petalInstancedMesh;
+        let petalsData = [];
+        let photoSystem = [];
+        let dustSystem;
+        let dummy = new THREE.Object3D();
+
+        let handLandmarker, video;
+        let gestureTimer = 0;
+        let lastDetectedGesture = 'NONE';
+        
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        class MemoryPhoto {
+            constructor(texture, index) {
+                const group = new THREE.Group();
+
+                const aspect = texture.image.width / texture.image.height;
+                let w = 4.8, h = 4.8;
+                if(aspect > 1) h = w / aspect; else w = h * aspect;
+
+                const frameGeo = new THREE.PlaneGeometry(w + 0.3, h + 0.3);
+                const frameMat = new THREE.MeshBasicMaterial({ 
+                    color: 0x111111, side: THREE.DoubleSide
+                });
+                const frame = new THREE.Mesh(frameGeo, frameMat);
+                frame.position.z = 0; 
+                group.add(frame);
+
+                const photoGeo = new THREE.PlaneGeometry(w, h);
+                const frontMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide });
+                const frontPhoto = new THREE.Mesh(photoGeo, frontMat);
+                frontPhoto.position.z = 0.1; 
+                group.add(frontPhoto);
+
+                const createBackCanvas = (width, height) => {
+                    const cvs = document.createElement('canvas');
+                    const baseSize = 512;
+                    if (width >= height) {
+                        cvs.width = baseSize;
+                        cvs.height = baseSize * (height / width);
+                    } else {
+                        cvs.height = baseSize;
+                        cvs.width = baseSize * (width / height);
+                    }
+                    
+                    const ctx = cvs.getContext('2d');
+                    ctx.fillStyle = '#fcfcfc'; 
+                    ctx.fillRect(0, 0, cvs.width, cvs.height);
+                    
+                    ctx.strokeStyle = '#8b0020'; 
+                    ctx.lineWidth = 10; 
+                    ctx.strokeRect(20, 20, cvs.width - 40, cvs.height - 40);
+                    
+                    ctx.font = `italic 400 ${Math.floor(baseSize * 0.08)}px "Playfair Display", serif`; 
+                    ctx.fillStyle = '#8b0020';
+                    ctx.textAlign = 'center'; 
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("迪迪❤耀薇", cvs.width / 2, cvs.height / 2);
+                    
+                    return cvs;
+                };
+
+                const backTex = new THREE.CanvasTexture(createBackCanvas(w, h));
+                backTex.colorSpace = THREE.SRGBColorSpace;
+                const backMat = new THREE.MeshBasicMaterial({ map: backTex, side: THREE.FrontSide });
+                const backMesh = new THREE.Mesh(photoGeo, backMat);
+                backMesh.position.z = -0.1; 
+                backMesh.rotation.y = Math.PI; 
+                group.add(backMesh);
+
+                photoGroup.add(group);
+                this.group = group;
+
+                const gapIndex = index % 4;
+                const uGap = 0.3 + gapIndex * 0.2; 
+                
+                const angle = index * 2.39996 + (Math.random() - 0.5) * 0.15; 
+                
+                const radius = uGap * 32.0; 
+                const yPos = Math.pow(uGap, 1.4) * 14.0 + 1.5; 
+                
+                this.posRose = new THREE.Vector3(
+                    Math.cos(angle) * radius,
+                    yPos, 
+                    Math.sin(angle) * radius
+                );
+                
+                dummy.position.copy(this.posRose);
+                
+                dummy.rotation.set(0, -angle + Math.PI/2, 0); 
+                let tilt = -0.4 + (uGap * 1.4);
+                dummy.rotateX(tilt); 
+                
+                dummy.rotateZ((Math.random() - 0.5) * 0.2);
+                dummy.rotateY(Math.PI);
+                
+                this.quatRose = dummy.quaternion.clone();
+
+                this.posScatter = new THREE.Vector3(
+                    (Math.random()-0.5) * 120,
+                    (Math.random()-0.5) * 100,
+                    (Math.random()-0.5) * 120
+                );
+                this.quatScatter = new THREE.Quaternion().random();
+                this.tumbleSpeed = new THREE.Vector3((Math.random()-0.5)*0.5, (Math.random()-0.5)*0.5, 0);
+
+                this.currentPos = this.posRose.clone();
+                this.currentQuat = this.quatRose.clone();
+                this.currentScale = new THREE.Vector3(0.85, 0.85, 0.85); 
+            }
+
+            update(dt) {
+                let targetPos, targetQuat;
+                let targetScale = 1.0;
+                let lerpSpeed = 2.0;
+
+                const currentBgMode = (STATE.mode === 'FOCUS') ? STATE.previousMode : STATE.mode;
+
+                if (STATE.mode === 'FOCUS' && STATE.focusTarget === this.group) {
+                    const focusDist = STATE.focusDist; 
+                    
+                    const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                    const camUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+                    
+                    const panOffset = new THREE.Vector3()
+                        .add(camRight.multiplyScalar(STATE.focusPan.x))
+                        .add(camUp.multiplyScalar(STATE.focusPan.y));
+
+                    const desiredWorldPos = camera.position.clone()
+                        .add(new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).multiplyScalar(focusDist))
+                        .add(panOffset);
+
+                    const invMatrix = new THREE.Matrix4().copy(photoGroup.matrixWorld).invert();
+                    targetPos = desiredWorldPos.applyMatrix4(invMatrix);
+                    
+                    const localCameraPos = camera.position.clone().applyMatrix4(invMatrix);
+                    dummy.position.copy(targetPos);
+                    dummy.lookAt(localCameraPos);
+                    targetQuat = dummy.quaternion.clone();
+                    
+                    targetScale = 2.5; 
+                    lerpSpeed = 10.0; 
+                } else if (currentBgMode === 'SCATTER') {
+                    targetPos = this.posScatter;
+                    const euler = new THREE.Euler().setFromQuaternion(this.quatScatter);
+                    euler.x += this.tumbleSpeed.x * dt;
+                    euler.y += this.tumbleSpeed.y * dt;
+                    this.quatScatter.setFromEuler(euler);
+                    targetQuat = this.quatScatter;
+                    targetScale = 1.0;
+                    lerpSpeed = 1.5;
+                } else {
+                    targetPos = this.posRose;
+                    targetQuat = this.quatRose;
+                    targetScale = 0.85;
+                    lerpSpeed = 3.0;
+                }
+
+                this.currentPos.lerp(targetPos, lerpSpeed * dt);
+                this.currentQuat.slerp(targetQuat, lerpSpeed * dt);
+                this.currentScale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), lerpSpeed * dt);
+                
+                this.group.position.copy(this.currentPos);
+                this.group.quaternion.copy(this.currentQuat);
+                this.group.scale.copy(this.currentScale);
+            }
+        }
+
+        async function init() {
+            initThree();
+            setupLights();
+            createParticleRose();
+            createDust();
+            createDefaultPhotos();
+            setupPostProcessing();
+            setupEvents();
+            
+            await initMediaPipe();
+
+            const loader = document.getElementById('loader');
+            loader.style.opacity = 0;
+            setTimeout(() => loader.remove(), 1000);
+
+            animate();
+        }
+
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.colors.bg);
+            scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.0035);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 45, 180); 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.NoToneMapping;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enablePan = false; 
+            controls.minDistance = 20;
+            controls.maxDistance = 500;
+
+            mainGroup = new THREE.Group();
+            scene.add(mainGroup);
+
+            photoGroup = new THREE.Group();
+            mainGroup.add(photoGroup);
+        }
+
+        function setupLights() {
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambient);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
+            dirLight.position.set(10, 30, 20);
+            scene.add(dirLight);
+
+            const coreLight = new THREE.PointLight(0xa1001e, 3, 50);
+            coreLight.position.set(0, 8, 0);
+            mainGroup.add(coreLight);
+        }
+
+        function setupPostProcessing() {
+            const renderScene = new RenderPass(scene, camera);
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+        }
+
+        function createParticleRose() {
+            const geo = new THREE.IcosahedronGeometry(0.18, 0); 
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xffffff, 
+                roughness: 0.5, metalness: 0.1,
+                transparent: true, opacity: 0.95
+            });
+
+            petalInstancedMesh = new THREE.InstancedMesh(geo, mat, TOTAL_PARTICLES);
+            mainGroup.add(petalInstancedMesh);
+
+            const goldenAngle = 137.508 * (Math.PI / 180);
+            const numLayers = 6; 
+            const baseColorHex = new THREE.Color(CONFIG.colors.petalBase);
+
+            let globalParticleIndex = 0;
+
+            for (let i = 0; i < CONFIG.counts.petalClusters; i++) {
+                const t = i / CONFIG.counts.petalClusters; 
+                const angle = i * goldenAngle;
+                
+                const layerFloat = Math.pow(t, 0.6) * numLayers;
+                const layerIndex = Math.min(Math.floor(layerFloat), numLayers - 1);
+                const u = layerIndex / (numLayers - 1); 
+                
+                const r = (u * 32.0) + (Math.random() * 2.0);
+                
+                let y = Math.pow(u, 1.4) * 14.0;
+                y += (Math.random() - 0.5) * 1.5; 
+
+                const x = Math.cos(angle) * r;
+                const z = Math.sin(angle) * r;
+                const clusterCenter = new THREE.Vector3(x, y, z);
+                
+                dummy.position.copy(clusterCenter);
+                dummy.rotation.set(0, -angle + Math.PI/2, 0);
+                
+                let tilt = -0.4 + (u * 1.4);
+                tilt += (Math.random() - 0.5) * 0.1; 
+                dummy.rotateX(tilt);
+
+                let pWidth = 5.0 + (u * 15.0);
+                let pHeight = 10.0 + (u * 12.0); 
+                
+                dummy.updateMatrix();
+
+                for (let p = 0; p < CONFIG.counts.particlesPerCluster; p++) {
+                    const uSphere = Math.random();
+                    const vSphere = Math.random();
+                    const thetaSq = uSphere * 2.0 * Math.PI;
+                    const phiSq = Math.acos(2.0 * vSphere - 1.0);
+                    
+                    let lx = Math.sin(phiSq) * Math.cos(thetaSq);
+                    let ly = Math.sin(phiSq) * Math.sin(thetaSq);
+                    let lz = Math.cos(phiSq);
+                    
+                    lx *= pWidth * 0.5;
+                    ly = (ly * 0.5 + 0.5) * pHeight; 
+                    lz *= 0.6; 
+
+                    const localPos = new THREE.Vector3(lx, ly, lz);
+                    const posRose = localPos.applyMatrix4(dummy.matrix);
+                    const quatRose = new THREE.Quaternion().random();
+                    const particleScale = new THREE.Vector3().setScalar(0.4 + Math.random() * 0.8);
+
+                    const colorOffset = 0.015; 
+                    const rShift = (Math.random() - 0.5) * colorOffset * 2;
+                    const gShift = (Math.random() - 0.5) * colorOffset * 2;
+                    const bShift = (Math.random() - 0.5) * colorOffset * 2;
+
+                    const instanceColor = baseColorHex.clone();
+                    instanceColor.r = THREE.MathUtils.clamp(instanceColor.r + rShift, 0, 1);
+                    instanceColor.g = THREE.MathUtils.clamp(instanceColor.g + gShift, 0, 1);
+                    instanceColor.b = THREE.MathUtils.clamp(instanceColor.b + bShift, 0, 1);
+                    
+                    petalInstancedMesh.setColorAt(globalParticleIndex, instanceColor);
+
+                    const rScatter = 20 + Math.random() * 100;
+                    const thetaS = Math.random() * Math.PI * 2;
+                    const phiS = Math.acos(2 * Math.random() - 1);
+                    
+                    const posScatter = new THREE.Vector3(
+                        rScatter * Math.sin(phiS) * Math.cos(thetaS),
+                        (Math.random() - 0.5) * 100,
+                        rScatter * Math.cos(phiS)
+                    );
+                    const quatScatter = new THREE.Quaternion().random();
+                    const tumbleAxis = new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize();
+                    const tumbleSpeed = (Math.random() - 0.5) * 3.0;
+
+                    petalsData.push({
+                        posRose, quatRose, posScatter, quatScatter, tumbleAxis, tumbleSpeed,
+                        currentPos: posRose.clone(), currentQuat: quatRose.clone(),
+                        scale: particleScale
+                    });
+
+                    globalParticleIndex++;
+                }
+            }
+            petalInstancedMesh.instanceColor.needsUpdate = true;
+        }
+
+        function createDust() {
+            const geo = new THREE.BufferGeometry();
+            const posArray = new Float32Array(CONFIG.counts.dust * 3);
+            
+            for(let i=0; i<CONFIG.counts.dust * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 180; 
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(16,16,0, 16,16,16);
+            grad.addColorStop(0, 'rgba(139, 0, 32, 0.8)');
+            grad.addColorStop(0.5, 'rgba(139, 0, 32, 0.2)');
+            grad.addColorStop(1, 'rgba(139, 0, 32, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0,32,32);
+
+            const mat = new THREE.PointsMaterial({
+                size: 1.2, map: new THREE.CanvasTexture(canvas),
+                transparent: true, blending: THREE.NormalBlending, depthWrite: false
+            });
+
+            dustSystem = new THREE.Points(geo, mat);
+            mainGroup.add(dustSystem);
+        }
+
+        function createDefaultPhotos() {
+            const createTextCanvas = (text) => {
+                const cvs = document.createElement('canvas');
+                cvs.width = 512; cvs.height = 512;
+                const ctx = cvs.getContext('2d');
+                ctx.fillStyle = '#fcfcfc'; ctx.fillRect(0,0,512,512);
+                ctx.strokeStyle = '#8b0020'; ctx.lineWidth = 10; ctx.strokeRect(20,20,472,472);
+                ctx.font = 'italic 400 48px "Playfair Display", serif'; ctx.fillStyle = '#8b0020';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(text, 256, 256);
+                return cvs;
+            };
+
+            const t1 = new THREE.CanvasTexture(createTextCanvas("2024.6.18"));
+            const t2 = new THREE.CanvasTexture(createTextCanvas("迪迪❤耀薇"));
+            t1.colorSpace = THREE.SRGBColorSpace; t2.colorSpace = THREE.SRGBColorSpace;
+
+            photoSystem.push(new MemoryPhoto(t1, 0));
+            photoSystem.push(new MemoryPhoto(t2, 1));
+        }
+
+        function handleImageUpload(e) {
+            const files = e.target.files;
+            if(!files.length) return;
+            let i = photoSystem.length;
+            Array.from(files).forEach(f => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const t = new THREE.Texture(img);
+                        t.colorSpace = THREE.SRGBColorSpace;
+                        t.needsUpdate = true;
+                        photoSystem.push(new MemoryPhoto(t, i++));
+                    };
+                    img.src = ev.target.result;
+                }
+                reader.readAsDataURL(f);
+            });
+        }
+
+        async function initMediaPipe() {
+            video = document.getElementById('webcam');
+            
+            const vision = await FilesetResolver.forVisionTasks(
+                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+            );
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: {
+                    modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                    delegate: "GPU"
+                },
+                runningMode: "VIDEO",
+                numHands: 1
+            });
+            
+            try {
+                if (navigator.mediaDevices?.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                    video.srcObject = stream;
+                    video.addEventListener("loadeddata", predictWebcam);
+                }
+            } catch (error) {
+                console.warn("相机被占用或未授权访问:", error);
+                const badge = document.getElementById('gesture-badge');
+                if (badge) {
+                    badge.innerText = '视觉：相机不可用';
+                }
+            }
+        }
+
+        let lastVideoTime = -1;
+        async function predictWebcam() {
+            if (video.currentTime !== lastVideoTime) {
+                lastVideoTime = video.currentTime;
+                if (handLandmarker) {
+                    const result = handLandmarker.detectForVideo(video, performance.now());
+                    processGestures(result);
+                }
+            }
+            requestAnimationFrame(predictWebcam);
+        }
+
+        function processGestures(result) {
+            const badge = document.getElementById('gesture-badge');
+            
+            if (result.landmarks && result.landmarks.length > 0) {
+                STATE.hand.detected = true;
+                const lm = result.landmarks[0];
+                
+                STATE.hand.x = (lm[9].x - 0.5) * 2; 
+                STATE.hand.y = (lm[9].y - 0.5) * 2;
+
+                const thumb = lm[4]; const index = lm[8]; const wrist = lm[0];
+                
+                const pinchDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
+                const indexDist = Math.hypot(index.x - wrist.x, index.y - wrist.y);
+                const avgOtherFingersDist = (
+                    Math.hypot(lm[12].x - wrist.x, lm[12].y - wrist.y) + 
+                    Math.hypot(lm[16].x - wrist.x, lm[16].y - wrist.y) + 
+                    Math.hypot(lm[20].x - wrist.x, lm[20].y - wrist.y)
+                ) / 3;
+
+                let detected = 'NONE';
+                
+                if (indexDist < 0.35 && avgOtherFingersDist < 0.35) {
+                    detected = 'FIST';
+                } 
+                else if (pinchDist < 0.08) {
+                    detected = 'PINCH';
+                } 
+                else if (indexDist > 0.40 && avgOtherFingersDist > 0.40) {
+                    detected = 'OPEN';
+                }
+
+                if (detected === lastDetectedGesture && detected !== 'NONE') {
+                    gestureTimer++;
+                    if (gestureTimer > 10) { 
+                        triggerStateChange(detected);
+                    }
+                } else {
+                    lastDetectedGesture = detected;
+                    gestureTimer = 0;
+                }
+                
+                let textZh = detected === 'FIST' ? '聚合态触发' : (detected === 'OPEN' ? '离散态触发' : (detected === 'PINCH' ? '追踪态触发' : '系统就绪'));
+                badge.innerText = `状态: ${textZh}`;
+                if(detected !== 'NONE') badge.classList.add('gesture-active');
+                else badge.classList.remove('gesture-active');
+
+            } else {
+                STATE.hand.detected = false;
+                // 不覆盖由于设备不可用造成的提示信息
+                if (badge.innerText !== '视觉：相机不可用') {
+                    badge.innerText = '视觉：目标丢失';
+                }
+                badge.classList.remove('gesture-active');
+            }
+        }
+
+        function triggerStateChange(gesture) {
+            if (gesture === 'FIST' && STATE.mode !== 'ROSE') {
+                STATE.mode = 'ROSE';
+                STATE.previousMode = 'ROSE'; 
+                STATE.focusTarget = null;
+                document.body.classList.remove('focus-mode');
+            } 
+            else if (gesture === 'OPEN' && STATE.mode !== 'SCATTER') {
+                STATE.mode = 'SCATTER';
+                STATE.previousMode = 'SCATTER'; 
+                STATE.focusTarget = null;
+                document.body.classList.remove('focus-mode');
+            }
+            else if (gesture === 'PINCH' && STATE.mode !== 'FOCUS') {
+                const target = findClosestPhoto();
+                if (target) {
+                    STATE.previousMode = STATE.mode; 
+                    STATE.mode = 'FOCUS';
+                    STATE.focusTarget = target;
+                    STATE.focusDist = 60; 
+                    STATE.focusPan.set(0, 0); 
+                    document.body.classList.add('focus-mode');
+                }
+            }
+        }
+
+        function findClosestPhoto() {
+            if (photoSystem.length === 0) return null;
+            let minDist = Infinity;
+            let closest = null;
+            
+            photoSystem.forEach(p => {
+                const worldPos = new THREE.Vector3();
+                p.group.getWorldPosition(worldPos);
+                worldPos.project(camera);
+                
+                if (worldPos.z < 1 && worldPos.z > -1) {
+                    const distSq = worldPos.x * worldPos.x + worldPos.y * worldPos.y;
+                    if (distSq < minDist) {
+                        minDist = distSq;
+                        closest = p.group;
+                    }
+                }
+            });
+            return closest;
+        }
+
+        function setupEvents() {
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            document.getElementById('file-input').addEventListener('change', handleImageUpload);
+            
+            window.addEventListener('contextmenu', (e) => {
+                e.preventDefault(); 
+            });
+
+            let isDragging = false;
+            let hasDragged = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            window.addEventListener('pointerdown', (event) => {
+                if (event.button === 2) {
+                    // 使用 classList.toggle 同步切换所有相关的 UI 元素
+                    document.getElementById('ui-layer').classList.toggle('ui-hidden');
+                    document.querySelector('.upload-wrapper').classList.toggle('ui-hidden');
+                    document.getElementById('gesture-badge').classList.toggle('ui-hidden');
+                    document.querySelector('.controls-hint').classList.toggle('ui-hidden');
+                    return; 
+                }
+
+                if (STATE.hand.detected) return;
+
+                isDragging = true;
+                hasDragged = false;
+                previousMousePosition.x = event.clientX;
+                previousMousePosition.y = event.clientY;
+            });
+
+            window.addEventListener('pointermove', (event) => {
+                if (STATE.hand.detected) return;
+
+                if (isDragging) {
+                    const dx = event.clientX - previousMousePosition.x;
+                    const dy = event.clientY - previousMousePosition.y;
+
+                    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                        hasDragged = true;
+                    }
+
+                    if (hasDragged && STATE.mode === 'FOCUS') {
+                        STATE.focusPan.x += dx * STATE.focusDist * 0.0015;
+                        STATE.focusPan.y -= dy * STATE.focusDist * 0.0015; 
+                    }
+                }
+                previousMousePosition.x = event.clientX;
+                previousMousePosition.y = event.clientY;
+            });
+
+            window.addEventListener('pointerup', (event) => {
+                if (event.button === 2) return;
+                if (STATE.hand.detected) {
+                    isDragging = false;
+                    return;
+                }
+
+                if (!hasDragged) {
+                    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                    raycaster.setFromCamera(mouse, camera);
+
+                    const intersects = raycaster.intersectObjects(photoGroup.children, true);
+
+                    if (intersects.length > 0) {
+                        let hitObject = intersects[0].object;
+                        while (hitObject.parent && hitObject.parent !== photoGroup) {
+                            hitObject = hitObject.parent;
+                        }
+                        
+                        if (STATE.mode === 'FOCUS') {
+                            if (STATE.focusTarget !== hitObject) {
+                                STATE.focusTarget = hitObject;
+                                STATE.focusDist = 60; 
+                                STATE.focusPan.set(0, 0); 
+                            }
+                        } else {
+                            STATE.previousMode = STATE.mode; 
+                            STATE.mode = 'FOCUS';
+                            STATE.focusTarget = hitObject;
+                            STATE.focusDist = 60; 
+                            STATE.focusPan.set(0, 0); 
+                            document.body.classList.add('focus-mode');
+                        }
+                    } else {
+                        if (STATE.mode === 'FOCUS') {
+                            STATE.mode = STATE.previousMode; 
+                            STATE.focusTarget = null;
+                            document.body.classList.remove('focus-mode');
+                        }
+                    }
+                }
+
+                isDragging = false;
+                hasDragged = false;
+            });
+
+            window.addEventListener('wheel', (event) => {
+                if (STATE.mode === 'FOCUS') {
+                    STATE.focusDist += event.deltaY * 0.05;
+                    STATE.focusDist = THREE.MathUtils.clamp(STATE.focusDist, 10, 120);
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.1); 
+            const time = clock.getElapsedTime();
+
+            if (!STATE.hand.detected && STATE.mode !== 'FOCUS') {
+                controls.enabled = true;
+                controls.update(); 
+            } else {
+                controls.enabled = false;
+            }
+
+            const currentBgMode = (STATE.mode === 'FOCUS') ? STATE.previousMode : STATE.mode;
+
+            if (currentBgMode === 'ROSE') {
+                STATE.targetRotation.y += 0.2 * dt;
+                STATE.targetRotation.x = 0; 
+            } else if (STATE.hand.detected) {
+                STATE.targetRotation.y = STATE.hand.x * Math.PI; 
+                STATE.targetRotation.x = STATE.hand.y * Math.PI * 0.5;
+            } else {
+                STATE.targetRotation.y += 0.05 * dt;
+            }
+
+            STATE.currentRotation.x += (STATE.targetRotation.x - STATE.currentRotation.x) * 3.0 * dt;
+            STATE.currentRotation.y += (STATE.targetRotation.y - STATE.currentRotation.y) * 3.0 * dt;
+
+            mainGroup.rotation.x = STATE.currentRotation.x;
+            mainGroup.rotation.y = STATE.currentRotation.y;
+
+            let lerpSpeed = currentBgMode === 'ROSE' ? 2.5 : 1.5;
+            
+            for (let i = 0; i < TOTAL_PARTICLES; i++) {
+                const p = petalsData[i];
+                let tPos, tQuat;
+
+                if (currentBgMode === 'ROSE') {
+                    tPos = p.posRose; tQuat = p.quatRose;
+                } else {
+                    tPos = p.posScatter;
+                    const qOffset = new THREE.Quaternion().setFromAxisAngle(p.tumbleAxis, p.tumbleSpeed * dt);
+                    p.quatScatter.multiply(qOffset);
+                    tQuat = p.quatScatter;
+                }
+                p.currentPos.lerp(tPos, lerpSpeed * dt);
+                p.currentQuat.slerp(tQuat, lerpSpeed * dt);
+
+                dummy.position.copy(p.currentPos);
+                dummy.quaternion.copy(p.currentQuat);
+                dummy.scale.copy(p.scale);
+                dummy.updateMatrix();
+                petalInstancedMesh.setMatrixAt(i, dummy.matrix);
+            }
+            petalInstancedMesh.instanceMatrix.needsUpdate = true;
+
+            photoSystem.forEach(p => p.update(dt));
+
+            if (dustSystem) {
+                dustSystem.rotation.y = time * 0.05;
+                dustSystem.rotation.z = time * 0.02;
+            }
+
+            composer.render();
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'CMS_PHOTOS') {
+                const urls = event.data.photos;
+                if(urls.length > 0) {
+                    // 清空默认那两张文字照片
+                    photoSystem.forEach(p => photoGroup.remove(p.group));
+                    photoSystem = [];
+                    
+                    // 循环加载后台上传的真实照片
+                    urls.forEach((url, index) => {
+                        new THREE.TextureLoader().load(url, (tex) => {
+                            tex.colorSpace = THREE.SRGBColorSpace;
+                            photoSystem.push(new MemoryPhoto(tex, index));
+                        });
+                    });
+                }
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

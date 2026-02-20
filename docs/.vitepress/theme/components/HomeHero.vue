@@ -99,12 +99,12 @@ onUnmounted(() => {
                 </div>
             </a>
 
-            <a href="/gallery" class="nav-card group bg-gradient-to-br from-white to-purple-50 border-purple-100 hover:border-purple-300">
+            <a href="/roses" class="nav-card group bg-gradient-to-br from-white to-purple-50 border-purple-100 hover:border-purple-300">
                 <div class="icon-box text-purple-500 bg-white shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
                     <i class="fas fa-images"></i>
                 </div>
                 <div class="mt-3 text-center">
-                    <h3 class="text-gray-800 font-bold text-base md:text-lg group-hover:text-purple-600 transition-colors">时光相册</h3>
+                    <h3 class="text-gray-800 font-bold text-base md:text-lg group-hover:text-purple-600 transition-colors">玫瑰相册</h3>
                     <p class="text-gray-400 text-xs mt-1">定格美好的瞬间</p>
                 </div>
             </a>
