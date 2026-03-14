@@ -14,6 +14,6 @@ import WishItem from './WishItem.vue' // 复用你之前的愿望条组件
       :done="wish.frontmatter.done" 
       :img="wish.frontmatter.image"
       :description="wish.frontmatter.description"
-    />
+      :author="wish.frontmatter.author"  />
   </div>
 </template>

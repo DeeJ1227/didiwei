@@ -8,9 +8,10 @@ import WishItem from './components/WishItem.vue'
 import MessageList from './components/MessageList.vue'
 import WishList from './components/WishList.vue'
 import FootprintList from './components/FootprintList.vue'
-// 👇 新增：引入刚才写的信纸抬头
+import LetterFooter from './components/LetterFooter.vue'
 import LetterHeader from './components/LetterHeader.vue'
 import RoseContainer from './components/RoseContainer.vue'
+import RecordList from './components/RecordList.vue'
 
 export default {
   extends: DefaultTheme,
@@ -18,7 +19,8 @@ export default {
   // 👇 核心修改：使用 VitePress 的插槽功能，把抬头固定在正文最上方
   Layout() {
     return h(DefaultTheme.Layout, null, {
-      'doc-before': () => h(LetterHeader)
+      'doc-before': () => h(LetterHeader),
+      'doc-after': () => h(LetterFooter) // 👈 让拍立得出现在文章最末尾
     })
   },
 
@@ -31,5 +33,6 @@ export default {
     app.component('WishList', WishList)
     app.component('FootprintList', FootprintList)
     app.component('RoseContainer', RoseContainer)
+    app.component('RecordList', RecordList)
   }
 }

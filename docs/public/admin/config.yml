@@ -6,8 +6,8 @@ backend:
 local_backend: true
 
 # 媒体配置：图片上传到哪里
-media_folder: "docs/public/images/uploads"
-public_folder: "/images/uploads"
+media_folder: "docs/public/images/roses"
+public_folder: "/images/roses"
 
 # 集合配置：定义"留言"这个功能
 collections:
@@ -15,49 +15,93 @@ collections:
     label: "💌 恋爱留言"
     folder: "docs/messages/posts"  # 留言文件存放的位置
     create: true
+    media_folder: "/docs/public/images/messages" # 👈 追加这行
+    public_folder: "/images/messages"            # 👈 追加这行
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # 文件名格式
     fields:
       - {label: "标题", name: "title", widget: "string"}
       - {label: "日期", name: "date", widget: "datetime"}
-      - {label: "谁写的", name: "author", widget: "select", options: ["迪迪", "耀薇"]}
+      - {label: "发布者 (主题色)", name: "author", widget: "select", options: ["迪迪", "耀薇"], default: "迪迪", required: false, hint: "耀薇为粉色主题，迪迪为蓝色主题"}
       - {label: "封面图", name: "cover", widget: "image", required: false}
       - {label: "内容", name: "body", widget: "markdown"}
+      
 
   # 👇 升级版：愿望清单
   - name: "wishes"
     label: "✨ 愿望清单"
     folder: "docs/wishes/data"
     create: true
+    media_folder: "/docs/public/images/wishes"   # 👈 追加这行
+    public_folder: "/images/wishes"              # 👈 追加这行
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     fields:
       - {label: "愿望名称", name: "title", widget: "string"}
+      - {label: "发布者", name: "author", widget: "select", options: ["迪迪", "耀薇"], default: "迪迪", required: false}
       - {label: "是否已完成？", name: "done", widget: "boolean", default: false, required: false}
       - {label: "简短的心得/描述", name: "description", widget: "string", required: false}
       - {label: "证据照片", name: "image", widget: "image", required: false}
 
-  # 👇 升级版：我们的足迹 (增加正反面)
   - name: "footprints"
     label: "🗺️ 我们的足迹"
     folder: "docs/footprints/data"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    
+    # 👇 追加：足迹专属独立照片文件夹
+    media_folder: "/docs/public/images/footprints"
+    public_folder: "/images/footprints"
+    
+    # 👇 黑科技 1：定制后台卡片文字显示。格式为 "城市 - 副标题"
+    summary: "{{city}} —— {{admin_subtitle}}"
+    
+
+    
     fields:
-      - {label: "城市", name: "city", widget: "string", hint: "必须填写，前台会根据城市自动分类"}
+      - {label: "城市", name: "city", widget: "string"}
+      
+      # 👇 新增：后台专属副标题
+      - {label: "后台副标题", name: "admin_subtitle", widget: "string", required: false, hint: "比如：第一次旅行。仅在后台显示，前台隐藏"}
+      
       - {label: "打卡日期", name: "date", widget: "datetime"}
+      - {label: "发布者", name: "author", widget: "select", options: ["耀薇", "迪迪"], default: "迪迪", required: false, hint: "耀薇为粉色主题，迪迪为蓝色主题"}
+
       - {label: "一句回忆", name: "description", widget: "string"}
-      - {label: "正面照片", name: "image_front", widget: "image"}
-      - {label: "反面照片", name: "image_back", widget: "image", required: false}
-  
-  # 👇 升级版：玫瑰相册 (支持标题和多图列表)
+      
+      # 👇 黑科技 2：把反面照片（Secret）移到正面照片的前面！
+      # 这样后台网格会自动拿它当封面，而前台因为靠变量名读取，完全不受影响！
+      - {label: "反面照片 (Secret)", name: "image", widget: "image", required: false}
+      - {label: "正面照片 (Cover)", name: "image_front", widget: "image"}
+
+      - {label: "详细日记", name: "body", widget: "markdown", required: false, hint: "支持长篇图文，前台点击后展开"}
+      
+# 👇 恢复原版：玫瑰相册 (定向独立文件夹)
   - name: "roses"
     label: "🌹 玫瑰相册"
     folder: "docs/roses/data"
     create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    # 核心指令：强制指定该栏目的图片存放路径，与大部队分开！
+    media_folder: "/docs/public/images/roses" 
+    public_folder: "/images/roses"
     fields:
-      - {label: "相册主题", name: "title", widget: "string", hint: "这会显示在后台列表中，比如：2026海边回忆"}
-      - label: "照片集"
-        name: "gallery"
-        widget: "list"
-        hint: "点击 Add 照片集 添加多张照片"
-        field: {label: "照片", name: "image", widget: "image"}
+      - {label: "照片记录", name: "title", widget: "string", hint: "随意起名，如'海边看日落'，仅用于后台列表显示区分"}
+      - {label: "上传照片", name: "image", widget: "image"}
+
+
+  - name: "records"
+    label: "🎙️ 录音回忆"
+    folder: "docs/records/data"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    
+    # 将录音和照片统一隔离存放至专属媒体库
+    media_folder: "/docs/public/media/records"
+    public_folder: "/media/records"
+    
+    fields:
+      - {label: "标题", name: "title", widget: "string", hint: "必填，如：我们的第一首歌"}
+      - {label: "发布者", name: "author", widget: "select", options: ["耀薇", "迪迪"], default: "迪迪", required: false, hint: "耀薇为粉色主题，迪迪为蓝色主题"}
+      - {label: "录音文件", name: "audio", widget: "file", hint: "必填，请上传 mp3 或 wav 格式的音频"}
+      - {label: "副标题", name: "subtitle", widget: "string", required: false, hint: "选填，可以是一句简单的描述"}
+      - {label: "封面照片", name: "image", widget: "image", required: false, hint: "选填，展示在录音上方"}
+      - {label: "发布日期", name: "date", widget: "datetime"}
+      - {label: "详细正文 (可选)", name: "body", widget: "markdown", required: false, hint: "可以写歌词、录音背后的故事等"}

@@ -11,24 +11,22 @@
 }
 
 /* ====================================
-   💌 秘密信箱 - 专属信纸主题
+   💌 秘密信箱 - 专属信纸主题 (双色版)
    ==================================== */
 
-/* 1. 隐藏默认生成的极其枯燥的大标题 (因为我们在 LetterHeader 里画了更好看的) */
-html.letter-theme .vp-doc h1:first-child {
+/* 1. 隐藏默认生成的极其枯燥的大标题 */
+html.letter-theme .vp-doc h1:first-child,
+html.letter-theme-boy .vp-doc h1:first-child {
   display: none !important;
 }
 
-/* 2. 打造信纸背景与横线 */
+/* ================= 🌸 耀薇信纸 (粉色主题 - 默认) ================= */
 html.letter-theme .vp-doc > div {
-  background-color: #fffdfc; /* 淡淡的暖色信纸背景 */
-  padding: 40px;
+  background-color: #fffdfc; 
+  padding: 36px 40px;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
   border: 1px solid #fdf3f1;
-  
-  /* 魔法：重复线性渐变画出信纸的横线 */
-  /* 横线间距是 36px，最后 1px 是粉色的线 */
   background-image: repeating-linear-gradient(
     transparent,
     transparent 35px,
@@ -36,30 +34,68 @@ html.letter-theme .vp-doc > div {
     #fcdedb 36px
   );
   background-size: 100% 36px;
-  
-  /* 行高必须严格等于背景横线间距，这样字才能完美踩在线上 */
+  background-origin: content-box; 
   line-height: 36px;
-  color: #5c4b4a; /* 像墨水一样的柔和字体颜色 */
+  color: #5c4b4a; 
   font-size: 16px;
 }
 
-/* 3. 强制调整段落间距，防止文字错位掉出格子 */
-html.letter-theme .vp-doc p {
-  margin: 0 0 36px 0 !important;
+/* ================= 🌊 迪迪信纸 (蓝色主题) ================= */
+html.letter-theme-boy .vp-doc > div {
+  background-color: #f8fbff; /* 清新的极浅蓝底色 */
+  padding: 36px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  border: 1px solid #eef4fc;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 35px,
+    #dbeafe 35px, /* Tailwind 的 blue-100，非常温柔的蓝 */
+    #dbeafe 36px
+  );
+  background-size: 100% 36px;
+  background-origin: content-box; 
+  line-height: 36px;
+  color: #475569; /* 稍微偏冷灰的字体颜色 (slate-600) */
+  font-size: 16px;
 }
 
-/* 4. 美化信件中插入的图片，像贴在信纸上的照片 */
-html.letter-theme .vp-doc img {
+/* 3. 强制段落对齐网格线 (男女通用) */
+html.letter-theme .vp-doc p,
+html.letter-theme .vp-doc h2,
+html.letter-theme .vp-doc h3,
+html.letter-theme .vp-doc h4,
+html.letter-theme .vp-doc ul,
+html.letter-theme .vp-doc ol,
+html.letter-theme .vp-doc li,
+html.letter-theme .vp-doc blockquote,
+html.letter-theme-boy .vp-doc p,
+html.letter-theme-boy .vp-doc h2,
+html.letter-theme-boy .vp-doc h3,
+html.letter-theme-boy .vp-doc h4,
+html.letter-theme-boy .vp-doc ul,
+html.letter-theme-boy .vp-doc ol,
+html.letter-theme-boy .vp-doc li,
+html.letter-theme-boy .vp-doc blockquote {
+  margin: 0 0 36px 0 !important;
+  line-height: 36px !important;
+}
+
+/* 4. 美化插入的图片 (男女通用) */
+html.letter-theme .vp-doc img,
+html.letter-theme-boy .vp-doc img {
+  display: block;
   margin: 36px auto !important;
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
   border: 4px solid white;
-  transform: rotate(-1deg); /* 微微倾斜一点点，增加手工感 */
+  transform: rotate(-1deg); 
 }
 
-/* 5. 适配手机端，减少两侧留白 */
+/* 5. 手机端适配 (男女通用) */
 @media (max-width: 640px) {
-  html.letter-theme .vp-doc > div {
-    padding: 20px 15px;
+  html.letter-theme .vp-doc > div,
+  html.letter-theme-boy .vp-doc > div {
+    padding: 36px 15px; 
   }
 }

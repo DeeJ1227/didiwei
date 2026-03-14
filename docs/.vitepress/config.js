@@ -15,6 +15,14 @@ export default defineConfig({
   
   themeConfig: {
     // 导航栏设为空数组，右侧就什么都没有了
-    nav: []
+    nav: [
+      { text: '首页', link: '/' },
+      { text: '💌 恋爱留言', link: '/messages' },
+      { text: '✨ 愿望清单', link: '/wishes' },
+      { text: '🗺️ 我们的足迹', link: '/footprints' },
+      { text: '🌹 玫瑰相册', link: '/roses' },
+      // 👇 新增这一行
+      { text: '🎙️ 录音回忆', link: '/records' } 
+    ],
   }
 })

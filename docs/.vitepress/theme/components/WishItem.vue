@@ -5,7 +5,8 @@ const props = defineProps({
   label: String,    
   done: Boolean,    
   img: String,      
-  description: String 
+  description: String,
+  author: String    
 })
 
 const isOpen = ref(false)
@@ -46,7 +47,8 @@ const toggle = () => {
       <div class="mt-4 px-2 flex flex-col gap-3">
         <img v-if="img" :src="img" class="rounded-xl shadow-md w-full max-w-md object-cover border border-gray-100" />
         
-        <p v-if="description" class="italic text-gray-500 text-sm leading-relaxed max-w-md">
+        <p v-if="description" class="italic text-sm leading-relaxed max-w-md"
+           :class="author === '迪迪' ? 'text-blue-500' : 'text-pink-500'">
           "{{ description }}"
         </p>
       </div>

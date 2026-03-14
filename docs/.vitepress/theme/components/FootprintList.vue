@@ -26,6 +26,12 @@ const toggleFlip = (url) => {
     flippedCards.add(url)
   }
 }
+
+const expandedText = ref(new Set())
+const toggleText = (url) => {
+  if (expandedText.value.has(url)) expandedText.value.delete(url)
+  else expandedText.value.add(url)
+}
 </script>
 
 <template>
@@ -87,7 +93,7 @@ const toggleFlip = (url) => {
               <div class="h-[20%] flex flex-col justify-center px-6 bg-white">
                   <div class="flex items-center justify-between">
                       <h3 class="text-gray-800 font-bold text-lg md:text-xl flex items-center">
-                          <i class="fas fa-map-marker-alt text-pink-500 mr-2"></i>{{ fp.frontmatter.city }}
+                          <i class="fas fa-map-marker-alt mr-2" :class="fp.frontmatter.author === '迪迪' ? 'text-blue-500' : 'text-pink-500'"></i>{{ fp.frontmatter.city }}
                       </h3>
                       <span class="text-sm text-gray-400 font-mono bg-gray-50 px-3 py-1 rounded-full">
                         {{ new Date(fp.frontmatter.date).toLocaleDateString().replace(/\//g, '.') }}
@@ -95,25 +101,45 @@ const toggleFlip = (url) => {
                   </div>
               </div>
               
-              <div v-if="fp.frontmatter.image_back" class="absolute bottom-4 right-4 text-gray-300 animate-bounce">
+              <div v-if="fp.frontmatter.image" class="absolute bottom-4 right-4 text-gray-300 animate-bounce">
                   <i class="fas fa-hand-pointer"></i>
               </div>
             </div>
 
             <div 
-              v-if="fp.frontmatter.image_back"
-              class="card-face absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-2xl overflow-hidden bg-white border-2 border-pink-100"
+              v-if="fp.frontmatter.image"
+              class="card-face absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-2xl overflow-hidden bg-white border-2"
+              :class="fp.frontmatter.author === '迪迪' ? 'border-blue-100' : 'border-pink-100'"
             >
-              <div class="w-full h-[85%] relative bg-white">
-                  <img :src="fp.frontmatter.image_back" class="w-full h-full object-contain bg-white p-2" />
-                  
-                  <div class="absolute top-4 right-4 text-pink-500/80 text-4xl drop-shadow-sm">
-                      <i class="fas fa-heart"></i>
-                  </div>
-              </div>
-              
-              <div class="h-[15%] flex items-center justify-center bg-pink-50 text-pink-600 font-medium px-4 text-center">
-                  {{ fp.frontmatter.description }}
+              <div class="w-full h-full overflow-y-auto bg-white flex flex-col custom-scrollbar">
+                
+                <div class="w-full relative bg-white border-b shrink-0 transition-all duration-300" 
+                     :class="[fp.html ? 'h-[280px]' : 'h-[80%]', fp.frontmatter.author === '迪迪' ? 'border-blue-50' : 'border-pink-50']">
+                    <img :src="fp.frontmatter.image" class="w-full h-full object-contain bg-white p-2" />
+                    <div class="absolute top-4 right-4 text-4xl drop-shadow-sm"
+                         :class="fp.frontmatter.author === '迪迪' ? 'text-blue-500/80' : 'text-pink-500/80'">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col items-center cursor-auto" 
+                     :class="[fp.html ? 'p-5 shrink-0 justify-start' : 'h-[20%] px-4 justify-center', fp.frontmatter.author === '迪迪' ? 'bg-blue-50/40' : 'bg-pink-50/40']" @click.stop>
+                    
+                    <div class="font-medium text-center" :class="[fp.html ? 'mb-3' : '', fp.frontmatter.author === '迪迪' ? 'text-blue-600' : 'text-pink-600']">
+                        {{ fp.frontmatter.description }}
+                    </div>
+                    
+                    <button v-if="fp.html" @click="toggleText(fp.url)" class="text-sm flex items-center transition-colors bg-white px-5 py-2 rounded-full shadow-sm border mb-2"
+                            :class="fp.frontmatter.author === '迪迪' ? 'text-blue-500 hover:text-blue-600 border-blue-100' : 'text-pink-500 hover:text-pink-600 border-pink-100'">
+                       <i class="fas mr-2 transition-transform duration-300" :class="expandedText.has(fp.url) ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                       {{ expandedText.has(fp.url) ? '收起日记' : '展开日记' }}
+                    </button>
+                    
+                    <div v-show="expandedText.has(fp.url)" class="mt-3 w-full bg-white p-5 rounded-xl shadow-inner border text-gray-600 text-sm leading-loose text-left" 
+                         :class="fp.frontmatter.author === '迪迪' ? 'border-blue-50' : 'border-pink-50'" v-html="fp.html">
+                    </div>
+
+                </div>
               </div>
             </div>
 
@@ -138,6 +164,18 @@ const toggleFlip = (url) => {
   -webkit-backface-visibility: hidden; 
 }
 .rotate-y-180 { transform: rotateY(180deg); }
+
+/* 自定义粉色迷你滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #fbcfe8; /* 浅粉色 */
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 /* 取消手机端点击时的高亮闪烁 */
 .scene { -webkit-tap-highlight-color: transparent; }

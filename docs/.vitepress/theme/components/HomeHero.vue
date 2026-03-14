@@ -87,9 +87,9 @@ onUnmounted(() => {
             </h1>
         </div>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full max-w-5xl px-2">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4 md:gap-6 w-full max-w-5xl px-2">
             
-            <a href="/footprints" class="nav-card group bg-gradient-to-br from-white to-blue-50 border-blue-100 hover:border-blue-300">
+            <a href="/footprints" class="nav-card group bg-gradient-to-br from-white to-blue-50 border-blue-100 hover:border-blue-300 md:col-span-3">
                 <div class="icon-box text-blue-500 bg-white shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                     <i class="fas fa-map-marked-alt"></i>
                 </div>
@@ -99,7 +99,7 @@ onUnmounted(() => {
                 </div>
             </a>
 
-            <a href="/roses" class="nav-card group bg-gradient-to-br from-white to-purple-50 border-purple-100 hover:border-purple-300">
+            <a href="/roses" class="nav-card group bg-gradient-to-br from-white to-purple-50 border-purple-100 hover:border-purple-300 md:col-span-3">
                 <div class="icon-box text-purple-500 bg-white shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
                     <i class="fas fa-images"></i>
                 </div>
@@ -109,7 +109,7 @@ onUnmounted(() => {
                 </div>
             </a>
             
-            <a href="/wishes" class="nav-card group bg-gradient-to-br from-white to-amber-50 border-amber-100 hover:border-amber-300">
+            <a href="/wishes" class="nav-card group bg-gradient-to-br from-white to-amber-50 border-amber-100 hover:border-amber-300 md:col-span-2">
                 <div class="icon-box text-amber-500 bg-white shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
@@ -119,13 +119,23 @@ onUnmounted(() => {
                 </div>
             </a>
 
-            <a href="/messages" class="nav-card group bg-gradient-to-br from-white to-pink-50 border-pink-100 hover:border-pink-300">
+            <a href="/messages" class="nav-card group bg-gradient-to-br from-white to-pink-50 border-pink-100 hover:border-pink-300 md:col-span-2">
                 <div class="icon-box text-pink-500 bg-white shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
                     <i class="fas fa-envelope-open-text"></i>
                 </div>
                 <div class="mt-3 text-center">
                     <h3 class="text-gray-800 font-bold text-base md:text-lg group-hover:text-pink-600 transition-colors">秘密留言</h3>
                     <p class="text-gray-400 text-xs mt-1">只写给你的情书</p>
+                </div>
+            </a>
+
+            <a href="/records" class="nav-card group bg-gradient-to-br from-white to-emerald-50 border-emerald-100 hover:border-emerald-300 md:col-span-2">
+                <div class="icon-box text-emerald-500 bg-white shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+                <div class="mt-3 text-center">
+                    <h3 class="text-gray-800 font-bold text-base md:text-lg group-hover:text-emerald-600 transition-colors">录音回忆</h3>
+                    <p class="text-gray-400 text-xs mt-1">听见心跳的声音</p>
                 </div>
             </a>
 

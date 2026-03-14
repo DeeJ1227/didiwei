@@ -43,18 +43,21 @@ const formatDate = (rawDate) => {
         <div class="p-6">
           <div class="flex items-center justify-between text-xs text-gray-400 mb-2 font-mono">
             <span>{{ formatDate(post.frontmatter.date) }}</span>
-            <span class="bg-pink-50 text-pink-500 px-2 py-0.5 rounded-full">
-               To: {{ post.frontmatter.author === '迪迪' ? '耀薇' : '迪迪' }}
+            <span class="px-3 py-1 rounded-full text-sm font-bold shadow-sm"
+                  :class="post.frontmatter.author === '迪迪' ? 'bg-blue-50 text-blue-500' : 'bg-pink-50 text-pink-500'">
+              To: {{ post.frontmatter.author === '迪迪' ? '耀薇' : '迪迪' }}
             </span>
           </div>
           
-          <h2 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors line-clamp-1">
+          <h2 class="text-2xl font-bold transition-colors"
+              :class="post.frontmatter.author === '迪迪' ? 'hover:text-blue-500' : 'hover:text-pink-500'">
             {{ post.frontmatter.title }}
           </h2>
           
-          <p class="text-gray-500 text-sm line-clamp-2">
-             点击阅读全文...
-          </p>
+          <div class="mt-4 text-sm"
+              :class="post.frontmatter.author === '迪迪' ? 'text-blue-500 hover:text-blue-600' : 'text-pink-500 hover:text-pink-600'">
+            点击阅读全文...
+          </div>
         </div>
       </a>
     </div>
