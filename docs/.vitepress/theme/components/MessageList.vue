@@ -26,7 +26,8 @@ const formatDate = (rawDate) => {
         v-for="post in posts" 
         :key="post.url" 
         :href="post.url"
-        class="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-pink-50"
+        class="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border"
+        :class="post.frontmatter.author === '迪迪' ? 'border-blue-50' : 'border-pink-50'"
       >
         <div v-if="post.frontmatter.cover" class="h-48 overflow-hidden relative">
           <img 
@@ -36,7 +37,8 @@ const formatDate = (rawDate) => {
           />
           <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
         </div>
-        <div v-else class="h-32 bg-gradient-to-r from-pink-100 to-rose-100 flex items-center justify-center">
+        <div v-else class="h-32 bg-gradient-to-r flex items-center justify-center"
+             :class="post.frontmatter.author === '迪迪' ? 'from-blue-100 to-blue-200' : 'from-pink-100 to-rose-100'">
             <i class="fas fa-envelope text-white/50 text-4xl"></i>
         </div>
 
