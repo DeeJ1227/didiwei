@@ -102,6 +102,6 @@ collections:
       - {label: "发布者", name: "author", widget: "select", options: ["耀薇", "迪迪"], default: "迪迪", required: false, hint: "耀薇为粉色主题，迪迪为蓝色主题"}
       - {label: "录音文件", name: "audio", widget: "file", hint: "必填，请上传 mp3 或 wav 格式的音频"}
       - {label: "副标题", name: "subtitle", widget: "string", required: false, hint: "选填，可以是一句简单的描述"}
-      - {label: "封面照片", name: "image", widget: "image", required: false, hint: "选填，展示在录音上方"}
+      - {label: "封面照片", name: "image", widget: "image", required: false, hint: "选填，展示在录音上方", media_folder: "/docs/public/images/records", public_folder: "/images/records"}
       - {label: "发布日期", name: "date", widget: "datetime"}
       - {label: "详细正文 (可选)", name: "body", widget: "markdown", required: false, hint: "可以写歌词、录音背后的故事等"}
